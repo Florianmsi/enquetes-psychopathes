@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#facc15">
+    <meta name="description" content="Enquêtes et Psychopathes - Jeu d'enquêtes criminelles">
+    <title>Enquêtes et Psychopathes</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Rye&family=Special+Elite&display=swap" rel="stylesheet">
+    
+    <!-- React and Babel for JSX -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        * {
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        @keyframes marquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+        
+        @keyframes spin-slow {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @keyframes pulse-slow {
+            0%, 100% { opacity: 0.05; }
+            50% { opacity: 0.08; }
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .animate-marquee {
+            animation: marquee 20s linear infinite;
+        }
+        
+        .bg-noise {
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+        
+        .bg-element:nth-child(4) {
+            animation: spin-slow 30s linear infinite;
+        }
+        
+        .bg-element:nth-child(10) {
+            animation: spin-slow 20s linear infinite reverse;
+        }
+        
+        .spiral-bg {
+            animation: pulse-slow 5s ease-in-out infinite;
+        }
+        
+        /* Optimisations tactiles pour mobile */
+        button, input {
+            font-size: 16px !important; /* Évite le zoom sur iOS */
+        }
+        
+        button {
+            min-height: 44px; /* Taille minimale tactile recommandée */
+            cursor: pointer;
+        }
+        
+        /* Amélioration de la lisibilité sur mobile */
+        @media (max-width: 640px) {
+            .text-7xl { font-size: 3rem; }
+            .text-8xl { font-size: 4rem; }
+            .text-6xl { font-size: 2.5rem; }
+            .text-5xl { font-size: 2rem; }
+            .text-4xl { font-size: 1.75rem; }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Database simulation with localStorage
+        const DB = {
+            getUsers: () => JSON.parse(localStorage.getItem('enquetes_psychopathes_users') || '[]'),
+            saveUser: (user) => {
+                const users = DB.getUsers();
+                users.push(user);
+                localStorage.setItem('enquetes_psychopathes_users', JSON.stringify(users));
+            },
+            getUser: (pseudo) => DB.getUsers().find(u => u.pseudo === pseudo),
+            updateUserScore: (pseudo, scores) => {
+                const users = DB.getUsers();
+                const user = users.find(u => u.pseudo === pseudo);
+                if (user) {
+                    user.scores = scores;
+                    localStorage.setItem('enquetes_psychopathes_users', JSON.stringify(users));
+                }
+            },
+            pseudoExists: (pseudo) => DB.getUsers().some(u => u.pseudo === pseudo)
+        };
+
+        const chapters = [
+            { id: 1, title: "Madame BONPOIL encaisse bien", difficulty: 2.1, maxPoints: 10, values: [0, 10] },
+            { id: 2, title: "Un fonctionnaire en moins", difficulty: 3.5, maxPoints: 15, values: [0, 15] },
+            { id: 3, title: "Une pute en moins", difficulty: 3.1, maxPoints: 15, values: [0, 15] },
+            { id: 4, title: "L'encre de la vengeance", difficulty: 1.7, maxPoints: 5, values: [0, 5] },
+            { id: 5, title: "Potins de Stars", difficulty: 3.2, maxPoints: 10, values: [0, 3, 7, 10] },
+            { id: 6, title: "Toc toc toc", difficulty: 4.8, maxPoints: 25, values: [0, 12, 25] },
+            { id: 7, title: "Choisis ta folie", difficulty: 4.5, maxPoints: 20, values: [0, 10, 20] }
+        ];
+
+        // Simple icons as SVG components
+        const SearchIcon = () => (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+        );
+
+        const SkullIcon = () => (
+            <svg className="w-32 h-32" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2C6.48 2 2 6.48 2 12c0 2.85 1.2 5.41 3.11 7.24l.03.03c.01.22.05.43.13.63.17.43.51.78.96.98.45.2.97.2 1.42 0 .45-.2.79-.55.96-.98.08-.2.12-.41.13-.63l.03-.03C10.67 17.41 11.32 17 12 17s1.33.41 2.23 1.24l.03.03c.01.22.05.43.13.63.17.43.51.78.96.98.45.2.97.2 1.42 0 .45-.2.79-.55.96-.98.08-.2.12-.41.13-.63l.03-.03C19.8 17.41 21 14.85 21 12c0-5.52-4.48-10-10-10zm-3 11c-.83 0-1.5-.67-1.5-1.5S8.17 10 9 10s1.5.67 1.5 1.5S9.83 13 9 13zm6 0c-.83 0-1.5-.67-1.5-1.5S14.17 10 15 10s1.5.67 1.5 1.5S15.83 13 15 13z"/>
+            </svg>
+        );
+
+        const AwardIcon = () => (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+            </svg>
+        );
+
+        const FileIcon = () => (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+        );
+
+        const AlertIcon = () => (
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+        );
+
+        function App() {
+            const [screen, setScreen] = useState('login');
+            const [pseudo, setPseudo] = useState('');
+            const [currentUser, setCurrentUser] = useState(null);
+            const [pseudoAvailable, setPseudoAvailable] = useState(true);
+            const [scores, setScores] = useState({});
+            const [showConfirm, setShowConfirm] = useState(null);
+
+            useEffect(() => {
+                if (pseudo.length > 0) {
+                    setPseudoAvailable(!DB.pseudoExists(pseudo));
+                }
+            }, [pseudo]);
+
+            const handleLogin = () => {
+                if (!pseudo.trim()) return;
+                
+                const existingUser = DB.getUser(pseudo);
+                if (existingUser) {
+                    setCurrentUser(existingUser);
+                    setScores(existingUser.scores || {});
+                    setScreen('game');
+                } else {
+                    const newUser = { pseudo, scores: {}, createdAt: new Date().toISOString() };
+                    DB.saveUser(newUser);
+                    setCurrentUser(newUser);
+                    setScores({});
+                    setScreen('game');
+                }
+            };
+
+            const handleScoreSelect = (chapterId, value) => {
+                if (scores[chapterId] !== undefined) return;
+                setShowConfirm({ chapterId, value });
+            };
+
+            const confirmScore = () => {
+                if (!showConfirm) return;
+                const newScores = { ...scores, [showConfirm.chapterId]: showConfirm.value };
+                setScores(newScores);
+                DB.updateUserScore(currentUser.pseudo, newScores);
+                setShowConfirm(null);
+            };
+
+            const calculateStats = () => {
+                const users = DB.getUsers();
+                const totalUsers = users.length;
+                
+                const chapterAverages = {};
+                chapters.forEach(chapter => {
+                    const allScores = users
+                        .map(u => u.scores?.[chapter.id])
+                        .filter(s => s !== undefined);
+                    chapterAverages[chapter.id] = allScores.length > 0
+                        ? allScores.reduce((a, b) => a + b, 0) / allScores.length
+                        : 0;
+                });
+
+                const userTotalScores = users.map(u => ({
+                    pseudo: u.pseudo,
+                    total: Object.values(u.scores || {}).reduce((a, b) => a + b, 0)
+                })).sort((a, b) => b.total - a.total);
+
+                const myTotal = Object.values(scores).reduce((a, b) => a + b, 0);
+                const globalAverage = userTotalScores.length > 0
+                    ? userTotalScores.reduce((a, b) => a + b.total, 0) / userTotalScores.length
+                    : 0;
+
+                return { chapterAverages, userTotalScores, myTotal, globalAverage, totalUsers };
+            };
+
+            const stats = screen === 'stats' ? calculateStats() : null;
+
+            // Login Screen
+            if (screen === 'login') {
+                return (
+                    <div className="min-h-screen bg-gradient-to-br from-zinc-900 via-neutral-900 to-black relative overflow-hidden">
+                        <div className="absolute inset-0 opacity-5">
+                            <div className="absolute top-20 left-10 text-9xl rotate-12 bg-element">🔍</div>
+                            <div className="absolute bottom-20 right-20 text-9xl -rotate-12 bg-element">💀</div>
+                            <div className="absolute top-1/3 right-1/4 text-6xl opacity-30 bg-element">👤</div>
+                            <div className="absolute top-40 right-10 text-8xl rotate-45 bg-element">🧠</div>
+                            <div className="absolute bottom-40 left-20 text-7xl -rotate-12 bg-element">🎭</div>
+                            <div className="absolute top-1/2 left-1/3 text-6xl rotate-90 bg-element">⏰</div>
+                            <div className="absolute bottom-32 right-1/3 text-7xl bg-element">💊</div>
+                            <div className="absolute top-1/4 left-1/2 text-5xl opacity-40 bg-element">🪞</div>
+                            <div className="absolute bottom-1/4 left-16 text-6xl rotate-45 bg-element">👁️</div>
+                            <div className="absolute top-2/3 right-16 text-5xl -rotate-30 bg-element">🌀</div>
+                        </div>
+                        
+                        <div className="absolute inset-0 bg-noise opacity-10"></div>
+                        
+                        <div className="absolute top-0 left-0 right-0 h-12 sm:h-16 bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-400 transform -rotate-2 opacity-90 flex items-center justify-center overflow-hidden">
+                            <div className="text-black font-bold text-xs sm:text-sm tracking-widest animate-marquee whitespace-nowrap" style={{fontFamily: "'Special Elite', cursive"}}>
+                                ⚠️ SCÈNE DE CRIME ... ET DE FOLIE ⚠️ SCÈNE DE CRIME ... ET DE FOLIE ⚠️ SCÈNE DE CRIME ... ET DE FOLIE ⚠️
+                            </div>
+                        </div>
+
+                        <div className="relative z-10 container mx-auto px-4 pt-24 sm:pt-32 pb-8 sm:pb-16">
+                            <div className="text-center mb-8 sm:mb-16 relative">
+                                <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 opacity-20">
+                                    <SkullIcon />
+                                </div>
+                                <h1 className="text-5xl sm:text-7xl md:text-8xl font-bold text-amber-50 mb-3 sm:mb-4 tracking-tight relative" 
+                                    style={{ fontFamily: "'Rye', serif", textShadow: '4px 4px 8px rgba(0,0,0,0.8)' }}>
+                                    ENQUÊTES
+                                </h1>
+                                <h2 className="text-3xl sm:text-4xl md:text-5xl text-yellow-400 mb-4 sm:mb-6" 
+                                    style={{ fontFamily: "'Rye', serif", textShadow: '3px 3px 6px rgba(0,0,0,0.8)' }}>
+                                    & Psychopathes
+                                </h2>
+                                <p className="text-amber-300 text-sm sm:text-lg mb-4 sm:mb-6 italic max-w-2xl mx-auto px-4" 
+                                   style={{ fontFamily: "'Special Elite', cursive", textShadow: '2px 2px 4px rgba(0,0,0,0.8)' }}>
+                                    "Plongez dans l'esprit des tueurs... avant qu'ils ne plongent dans le vôtre"
+                                </p>
+                                <div className="inline-block bg-red-900 px-4 sm:px-6 py-1 sm:py-2 transform -rotate-2">
+                                    <p className="text-amber-50 text-xs sm:text-sm tracking-wider" style={{ fontFamily: "'Special Elite', cursive" }}>
+                                        DOSSIER CONFIDENTIEL
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="max-w-2xl mx-auto bg-zinc-800 border-2 sm:border-4 border-amber-700 rounded-lg p-4 sm:p-8 shadow-2xl relative overflow-hidden">
+                                <div className="absolute top-4 right-4 opacity-10">
+                                    <div className="w-16 h-16 sm:w-24 sm:h-24 rounded-full border-4 sm:border-8 border-amber-600"
+                                         style={{ background: 'radial-gradient(circle, transparent 40%, rgba(217,119,6,0.3) 40%, rgba(217,119,6,0.3) 45%, transparent 45%, transparent 50%, rgba(217,119,6,0.3) 50%, rgba(217,119,6,0.3) 55%, transparent 55%)' }}>
+                                    </div>
+                                </div>
+                                
+                                <div className="absolute bottom-4 left-4 opacity-5 text-4xl sm:text-6xl">🧠</div>
+                                <div className="absolute top-1/2 left-2 opacity-5 text-3xl sm:text-5xl transform -rotate-12">🎭</div>
+
+                                <div className="relative z-10">
+                                    <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+                                        <SearchIcon />
+                                        <h3 className="text-xl sm:text-2xl text-amber-50 font-bold" style={{ fontFamily: "'Special Elite', cursive" }}>
+                                            IDENTIFICATION DÉTECTIVE
+                                        </h3>
+                                    </div>
+
+                                    <div className="bg-red-950 border-2 border-red-700 rounded p-3 sm:p-4 mb-4 sm:mb-6">
+                                        <div className="flex gap-2 sm:gap-3">
+                                            <AlertIcon />
+                                            <div>
+                                                <p className="text-amber-50 font-bold mb-2 text-sm sm:text-base" style={{ fontFamily: "'Special Elite', cursive" }}>
+                                                    ⚠️ ATTENTION : Protocole sans mot de passe
+                                                </p>
+                                                <p className="text-amber-100 text-xs sm:text-sm mb-2" style={{ fontFamily: "'Special Elite', cursive" }}>
+                                                    Ce pseudo sera votre SEUL moyen de vous reconnecter. Choisissez-le bien et mémorisez-le !
+                                                </p>
+                                                <p className="text-yellow-300 text-xs italic" style={{ fontFamily: "'Special Elite', cursive" }}>
+                                                    Conseil : Personnalisez votre pseudo pour le rendre unique et mémorable
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="mb-3 sm:mb-4">
+                                        <p className="text-amber-200 text-xs sm:text-sm mb-2" style={{ fontFamily: "'Special Elite', cursive" }}>
+                                            Exemples de pseudos créatifs :
+                                        </p>
+                                        <div className="flex flex-wrap gap-2">
+                                            {['SherlockModerne', 'Inspecteur_42', 'Miss_Marple_2.0', 'Le_Limier', 'Columbo_Jr'].map(ex => (
+                                                <span key={ex} className="px-2 sm:px-3 py-1 bg-zinc-700 text-amber-300 text-xs rounded border border-amber-800"
+                                                      style={{ fontFamily: "'Special Elite', cursive" }}>
+                                                    {ex}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className="mb-4 sm:mb-6">
+                                        <label className="block text-amber-200 mb-2 text-xs sm:text-sm" style={{ fontFamily: "'Special Elite', cursive" }}>
+                                            Votre pseudo de détective :
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={pseudo}
+                                            onChange={(e) => setPseudo(e.target.value)}
+                                            onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
+                                            placeholder="Entrez votre pseudo unique..."
+                                            className="w-full px-3 sm:px-4 py-3 bg-zinc-900 border-2 border-amber-700 rounded text-amber-50 placeholder-zinc-500 focus:outline-none focus:border-yellow-400 transition-colors text-base"
+                                            style={{ fontFamily: "'Special Elite', cursive" }}
+                                        />
+                                        {pseudo.length > 0 && (
+                                            <p className={`mt-2 text-xs sm:text-sm ${pseudoAvailable ? 'text-green-400' : 'text-yellow-400'}`}
+                                               style={{ fontFamily: "'Special Elite', cursive" }}>
+                                                {pseudoAvailable 
+                                                    ? '✓ Ce pseudo est disponible - Nouveau dossier'
+                                                    : '✓ Pseudo existant - Accès à votre dossier'}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    <button
+                                        onClick={handleLogin}
+                                        disabled={!pseudo.trim()}
+                                        className="w-full py-3 sm:py-4 bg-gradient-to-r from-yellow-600 to-amber-700 hover:from-yellow-500 hover:to-amber-600 active:scale-95 disabled:from-zinc-700 disabled:to-zinc-600 text-black font-bold text-base sm:text-lg rounded border-2 border-yellow-500 disabled:border-zinc-500 transition-all disabled:cursor-not-allowed shadow-lg"
+                                        style={{ fontFamily: "'Special Elite', cursive" }}>
+                                        {pseudoAvailable && pseudo.length > 0 
+                                            ? '🔍 OUVRIR NOUVEAU DOSSIER'
+                                            : '📁 ACCÉDER À MON DOSSIER'}
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="text-center mt-8 sm:mt-12 text-amber-300 text-xs sm:text-sm space-y-2" style={{ fontFamily: "'Special Elite', cursive" }}>
+                                <p>Score maximum possible : 100 points • 7 enquêtes à résoudre</p>
+                                <p className="text-xs text-amber-400 italic flex items-center justify-center gap-2 flex-wrap px-4">
+                                    <span>🧠</span>
+                                    <span>Chaque esprit criminel révèle ses secrets... à qui sait les chercher</span>
+                                    <span>🔍</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            // Game Screen
+            if (screen === 'game') {
+                const myTotal = Object.values(scores).reduce((a, b) => a + b, 0);
+                
+                return (
+                    <div className="min-h-screen bg-gradient-to-br from-zinc-900 via-neutral-900 to-black relative overflow-hidden">
+                        <div className="absolute inset-0 opacity-5 bg-noise"></div>
+                        
+                        <div className="sticky top-0 z-50 bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-400 py-3 sm:py-4 border-b-4 border-black shadow-lg">
+                            <div className="container mx-auto px-4">
+                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
+                                    <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                                        <div className="bg-black rounded-full px-3 sm:px-4 py-2 flex items-center gap-2">
+                                            <SearchIcon />
+                                            <span className="text-yellow-400 font-bold text-xs sm:text-sm" style={{ fontFamily: "'Special Elite', cursive" }}>
+                                                {currentUser.pseudo}
+                                            </span>
+                                        </div>
+                                        
+                                        <div className="bg-black rounded-full px-3 sm:px-4 py-2">
+                                            <span className="text-amber-300 text-xs mr-1 sm:mr-2" style={{ fontFamily: "'Special Elite', cursive" }}>
+                                                SCORE :
+                                            </span>
+                                            <span className="text-yellow-400 font-bold text-base sm:text-lg" style={{ fontFamily: "'Special Elite', cursive" }}>
+                                                {myTotal}
+                                            </span>
+                                            <span className="text-amber-300 text-xs ml-1" style={{ fontFamily: "'Special Elite', cursive" }}>
+                                                / 100
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        onClick={() => setScreen('stats')}
+                                        className="px-4 sm:px-6 py-2 sm:py-3 bg-black text-yellow-400 font-bold rounded-lg hover:bg-zinc-800 active:scale-95 transition-all flex items-center gap-2 sm:gap-3 shadow-xl border-2 border-yellow-600 justify-center"
+                                        style={{ fontFamily: "'Special Elite', cursive" }}>
+                                        <AwardIcon />
+                                        <div className="text-left">
+                                            <div className="text-xs text-amber-300">ACCÉDER AU</div>
+                                            <div className="text-xs sm:text-sm">TOP 10 & STATISTIQUES</div>
+                                        </div>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="container mx-auto px-4 py-6 sm:py-12">
+                            <div className="text-center mb-6 sm:mb-12">
+                                <h1 className="text-3xl sm:text-5xl md:text-6xl text-amber-50 mb-3 sm:mb-4" 
+                                    style={{ fontFamily: "'Rye', serif", textShadow: '3px 3px 6px rgba(0,0,0,0.8)' }}>
+                                    DOSSIERS D'ENQUÊTE
+                                </h1>
+                                <div className="inline-block bg-red-900 px-3 sm:px-4 py-1 transform rotate-1">
+                                    <p className="text-amber-50 text-xs tracking-wider" style={{ fontFamily: "'Special Elite', cursive" }}>
+                                        STRICTEMENT CONFIDENTIEL
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="max-w-6xl mx-auto space-y-4 sm:space-y-6">
+                                {chapters.map((chapter, index) => {
+                                    const isCompleted = scores[chapter.id] !== undefined;
+                                    const myScore = scores[chapter.id] || 0;
+                                    
+                                    return (
+                                        <div
+                                            key={chapter.id}
+                                            className="bg-zinc-800 border-2 border-amber-700 rounded-lg p-4 sm:p-6 shadow-xl"
+                                            style={{ 
+                                                backgroundImage: 'linear-gradient(to bottom right, rgba(39,39,42,0.95), rgba(24,24,27,0.95))',
+                                                animation: `fadeIn 0.6s ease-out ${index * 0.1}s backwards`
+                                            }}>
+                                            
+                                            <div className="flex flex-col gap-3 sm:gap-4">
+                                                <div className="flex-1">
+                                                    <div className="flex items-start gap-2 sm:gap-3 mb-2 flex-wrap">
+                                                        <div className="bg-red-900 px-2 sm:px-3 py-1 rounded">
+                                                            <span className="text-yellow-400 font-bold text-xs sm:text-sm" style={{ fontFamily: "'Special Elite', cursive" }}>
+                                                                DOSSIER #{chapter.id}
+                                                            </span>
+                                                        </div>
+                                                        {isCompleted && (
+                                                            <div className="bg-green-900 px-2 sm:px-3 py-1 rounded animate-pulse">
+                                                                <span className="text-green-300 font-bold text-xs" style={{ fontFamily: "'Special Elite', cursive" }}>
+                                                                    ✓ ENQUÊTE FINALISÉE
+                                                                </span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    
+                                                    <h3 className="text-lg sm:text-2xl text-amber-50 font-bold mb-2" 
+                                                        style={{ fontFamily: "'Special Elite', cursive" }}>
+                                                        {chapter.title}
+                                                    </h3>
+                                                    
+                                                    <div className="flex items-center gap-3 sm:gap-4 text-xs sm:text-sm flex-wrap">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-amber-300" style={{ fontFamily: "'Special Elite', cursive" }}>
+                                                                Difficulté:
+                                                            </span>
+                                                            <div className="flex gap-1">
+                                                                {[1, 2, 3, 4, 5].map(star => (
+                                                                    <span key={star} className={star <= Math.round(chapter.difficulty) ? 'text-yellow-400' : 'text-zinc-600'}>
+                                                                        ★
+                                                                    </span>
+                                                                ))}
+                                                            </div>
+                                                            <span className="text-yellow-400 font-bold" style={{ fontFamily: "'Special Elite', cursive" }}>
+                                                                {chapter.difficulty}/5
+                                                            </span>
+                                                        </div>
+                                                        
+                                                        <div className="text-amber-300" style={{ fontFamily: "'Special Elite', cursive" }}>
+                                                            Max: <span className="text-yellow-400 font-bold">{chapter.maxPoints} pts</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex flex-col items-center sm:items-end gap-2 sm:gap-3">
+                                                    {isCompleted ? (
+                                                        <div className="text-center">
+                                                            {myScore === chapter.maxPoints && (
+                                                                <div className="text-4xl sm:text-5xl mb-2 animate-bounce">
+                                                                    🏆
+                                                                </div>
+                                                            )}
+                                                            <div className="text-3xl sm:text-4xl font-bold text-green-400 mb-1">
+                                                                {myScore}
+                                                            </div>
+                                                            <div className="text-xs text-amber-300" style={{ fontFamily: "'Special Elite', cursive" }}>
+                                                                points obtenus
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="w-full sm:w-auto">
+                                                            <p className="text-amber-300 text-xs sm:text-sm mb-2 text-center sm:text-right" style={{ fontFamily: "'Special Elite', cursive" }}>
+                                                                Votre score :
+                                                            </p>
+                                                            <div className="flex gap-2 justify-center sm:justify-end flex-wrap">
+                                                                {chapter.values.map(value => (
+                                                                    <button
+                                                                        key={value}
+                                                                        onClick={() => handleScoreSelect(chapter.id, value)}
+                                                                        className="px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-b from-yellow-600 to-amber-700 hover:from-yellow-500 hover:to-amber-600 active:scale-95 text-black font-bold rounded border-2 border-yellow-500 transition-all shadow-lg text-base"
+                                                                        style={{ fontFamily: "'Special Elite', cursive" }}>
+                                                                        {value}
+                                                                    </button>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+
+                            <div className="max-w-6xl mx-auto mt-8 sm:mt-12 bg-zinc-800 border-2 sm:border-4 border-yellow-600 rounded-lg p-6 sm:p-8 text-center relative overflow-hidden">
+                                <div className="absolute inset-0 bg-gradient-to-br from-yellow-900/10 to-red-900/10"></div>
+                                <div className="relative z-10">
+                                    <p className="text-amber-300 text-base sm:text-lg mb-2" style={{ fontFamily: "'Special Elite', cursive" }}>
+                                        SCORE TOTAL ACTUEL
+                                    </p>
+                                    <div className="text-5xl sm:text-7xl font-bold text-yellow-400 mb-2">
+                                        {myTotal}
+                                    </div>
+                                    <p className="text-amber-200 text-xl sm:text-2xl" style={{ fontFamily: "'Special Elite', cursive" }}>
+                                        / 100 points
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {showConfirm && (
+                            <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+                                <div className="bg-zinc-800 border-2 sm:border-4 border-red-700 rounded-lg p-6 sm:p-8 max-w-md w-full shadow-2xl">
+                                    <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+                                        <AlertIcon />
+                                        <h3 className="text-xl sm:text-2xl text-amber-50 font-bold" style={{ fontFamily: "'Special Elite', cursive" }}>
+                                            CONFIRMATION
+                                        </h3>
+                                    </div>
+                                    
+                                    <div className="bg-red-950 border-2 border-red-700 rounded p-3 sm:p-4 mb-4 sm:mb-6">
+                                        <p className="text-amber-50 mb-4 text-sm sm:text-base" style={{ fontFamily: "'Special Elite', cursive" }}>
+                                            ⚠️ Attention, vous allez valider <span className="text-yellow-400 font-bold">{showConfirm.value} points</span> pour le chapitre "{chapters.find(c => c.id === showConfirm.chapterId)?.title}".
+                                        </p>
+                                        <p className="text-red-300 font-bold text-sm sm:text-base" style={{ fontFamily: "'Special Elite', cursive" }}>
+                                            Cette action est DÉFINITIVE et ne pourra pas être modifiée !
+                                        </p>
+                                    </div>
+
+                                    <div className="flex gap-3 sm:gap-4">
+                                        <button
+                                            onClick={() => setShowConfirm(null)}
+                                            className="flex-1 py-3 bg-zinc-700 hover:bg-zinc-600 active:scale-95 text-amber-50 font-bold rounded border-2 border-zinc-500 transition-all text-base"
+                                            style={{ fontFamily: "'Special Elite', cursive" }}>
+                                            ANNULER
+                                        </button>
+                                        <button
+                                            onClick={confirmScore}
+                                            className="flex-1 py-3 bg-gradient-to-r from-yellow-600 to-amber-700 hover:from-yellow-500 hover:to-amber-600 active:scale-95 text-black font-bold rounded border-2 border-yellow-500 transition-all text-base"
+                                            style={{ fontFamily: "'Special Elite', cursive" }}>
+                                            VALIDER
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                );
+            }
+
+            // Stats Screen
+            if (screen === 'stats') {
+                return (
+                    <div className="min-h-screen bg-gradient-to-br from-zinc-900 via-neutral-900 to-black relative overflow-hidden">
+                        <div className="absolute inset-0 opacity-5 bg-noise"></div>
+                        
+                        <div className="sticky top-0 z-50 bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-400 py-3 sm:py-4 border-b-4 border-black shadow-lg">
+                            <div className="container mx-auto px-4">
+                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
+                                    <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                                        <div className="bg-black rounded-full px-3 sm:px-4 py-2 flex items-center gap-2">
+                                            <SearchIcon />
+                                            <span className="text-yellow-400 font-bold text-xs sm:text-sm" style={{ fontFamily: "'Special Elite', cursive" }}>
+                                                {currentUser.pseudo}
+                                            </span>
+                                        </div>
+                                        
+                                        <div className="bg-black rounded-full px-3 sm:px-4 py-2">
+                                            <span className="text-amber-300 text-xs mr-1 sm:mr-2" style={{ fontFamily: "'Special Elite', cursive" }}>
+                                                SCORE :
+                                            </span>
+                                            <span className="text-yellow-400 font-bold text-base sm:text-lg" style={{ fontFamily: "'Special Elite', cursive" }}>
+                                                {stats.myTotal}
+                                            </span>
+                                            <span className="text-amber-300 text-xs ml-1" style={{ fontFamily: "'Special Elite', cursive" }}>
+                                                / 100
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        onClick={() => setScreen('game')}
+                                        className="px-4 sm:px-6 py-2 sm:py-3 bg-black text-yellow-400 font-bold rounded-lg hover:bg-zinc-800 active:scale-95 transition-all flex items-center gap-2 sm:gap-3 shadow-xl border-2 border-yellow-600 justify-center"
+                                        style={{ fontFamily: "'Special Elite', cursive" }}>
+                                        <FileIcon />
+                                        <span className="text-xs sm:text-sm">RETOUR AUX DOSSIERS</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="container mx-auto px-4 py-6 sm:py-12">
+                            <div className="text-center mb-6 sm:mb-12">
+                                <h1 className="text-3xl sm:text-5xl md:text-6xl text-amber-50 mb-3 sm:mb-4" 
+                                    style={{ fontFamily: "'Rye', serif", textShadow: '3px 3px 6px rgba(0,0,0,0.8)' }}>
+                                    RAPPORT STATISTIQUE
+                                </h1>
+                                <div className="inline-block bg-red-900 px-3 sm:px-4 py-1 transform -rotate-1">
+                                    <p className="text-amber-50 text-xs tracking-wider" style={{ fontFamily: "'Special Elite', cursive" }}>
+                                        CLASSEMENT GÉNÉRAL • {stats.totalUsers} DÉTECTIVES
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="max-w-4xl mx-auto mb-8 sm:mb-12 bg-zinc-800 border-2 sm:border-4 border-yellow-600 rounded-lg p-4 sm:p-8">
+                                <div className="grid sm:grid-cols-2 gap-6 sm:gap-8">
+                                    <div className="text-center">
+                                        <p className="text-amber-300 text-base sm:text-lg mb-2" style={{ fontFamily: "'Special Elite', cursive" }}>
+                                            VOTRE SCORE
+                                        </p>
+                                        <div className="text-5xl sm:text-6xl font-bold text-yellow-400 mb-2">
+                                            {stats.myTotal}
+                                        </div>
+                                        <p className="text-amber-200 text-lg sm:text-xl" style={{ fontFamily: "'Special Elite', cursive" }}>
+                                            / 100 points
+                                        </p>
+                                    </div>
+                                    
+                                    <div className="text-center">
+                                        <p className="text-amber-300 text-base sm:text-lg mb-2" style={{ fontFamily: "'Special Elite', cursive" }}>
+                                            MOYENNE GÉNÉRALE
+                                        </p>
+                                        <div className="text-5xl sm:text-6xl font-bold text-amber-400 mb-2">
+                                            {stats.globalAverage.toFixed(1)}
+                                        </div>
+                                        <p className="text-amber-200 text-lg sm:text-xl" style={{ fontFamily: "'Special Elite', cursive" }}>
+                                            / 100 points
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="mt-6">
+                                    <div className="bg-zinc-700 rounded-full h-6 overflow-hidden relative">
+                                        <div 
+                                            className="bg-gradient-to-r from-yellow-600 to-amber-600 h-full transition-all duration-1000 flex items-center justify-end pr-2"
+                                            style={{ width: `${(stats.myTotal / 100) * 100}%` }}>
+                                            <span className="text-black text-xs font-bold" style={{ fontFamily: "'Special Elite', cursive" }}>
+                                                VOUS
+                                            </span>
+                                        </div>
+                                        <div 
+                                            className="absolute top-0 left-0 h-full border-r-4 border-red-500 transition-all duration-1000"
+                                            style={{ width: `${(stats.globalAverage / 100) * 100}%` }}>
+                                        </div>
+                                    </div>
+                                    <div className="flex justify-between mt-2 text-xs text-amber-300" style={{ fontFamily: "'Special Elite', cursive" }}>
+                                        <span>0</span>
+                                        <span className="text-red-400">↑ Moyenne</span>
+                                        <span>100</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="max-w-4xl mx-auto mb-8 sm:mb-12">
+                                <h2 className="text-2xl sm:text-3xl text-amber-50 mb-4 sm:mb-6 text-center" 
+                                    style={{ fontFamily: "'Special Elite', cursive" }}>
+                                    ANALYSE PAR DOSSIER
+                                </h2>
+                                
+                                <div className="space-y-3 sm:space-y-4">
+                                    {chapters.map(chapter => {
+                                        const myScore = scores[chapter.id] || 0;
+                                        const avgScore = stats.chapterAverages[chapter.id] || 0;
+                                        
+                                        return (
+                                            <div key={chapter.id} className="bg-zinc-800 border-2 border-amber-700 rounded-lg p-3 sm:p-4">
+                                                <div className="flex justify-between items-center mb-2 gap-2">
+                                                    <h3 className="text-sm sm:text-lg text-amber-50 font-bold flex-1" style={{ fontFamily: "'Special Elite', cursive" }}>
+                                                        #{chapter.id} - {chapter.title}
+                                                    </h3>
+                                                    <div className="text-xs sm:text-sm text-amber-300 whitespace-nowrap" style={{ fontFamily: "'Special Elite', cursive" }}>
+                                                        Max: {chapter.maxPoints}
+                                                    </div>
+                                                </div>
+                                                
+                                                <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-2 text-xs sm:text-sm">
+                                                    <div>
+                                                        <span className="text-amber-300" style={{ fontFamily: "'Special Elite', cursive" }}>
+                                                            Vous: 
+                                                        </span>
+                                                        <span className="text-yellow-400 font-bold ml-2" style={{ fontFamily: "'Special Elite', cursive" }}>
+                                                            {myScore} pts
+                                                        </span>
+                                                    </div>
+                                                    <div>
+                                                        <span className="text-amber-300" style={{ fontFamily: "'Special Elite', cursive" }}>
+                                                            Moyenne: 
+                                                        </span>
+                                                        <span className="text-amber-400 font-bold ml-2" style={{ fontFamily: "'Special Elite', cursive" }}>
+                                                            {avgScore.toFixed(1)} pts
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div className="bg-zinc-700 rounded-full h-4 overflow-hidden relative">
+                                                    <div 
+                                                        className="bg-yellow-600 h-full transition-all duration-500"
+                                                        style={{ width: `${(myScore / chapter.maxPoints) * 100}%` }}>
+                                                    </div>
+                                                    <div 
+                                                        className="absolute top-0 left-0 h-full border-r-2 border-red-500"
+                                                        style={{ width: `${(avgScore / chapter.maxPoints) * 100}%` }}>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            <div className="max-w-4xl mx-auto">
+                                <div className="bg-zinc-800 border-2 sm:border-4 border-amber-700 rounded-lg p-4 sm:p-8 relative overflow-hidden">
+                                    <div className="absolute top-4 right-4 opacity-10 hidden sm:block">
+                                        <svg className="w-24 h-24 sm:w-32 sm:h-32" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-5-9h10v2H7z"/>
+                                        </svg>
+                                    </div>
+                                    
+                                    <h2 className="text-2xl sm:text-3xl text-amber-50 mb-4 sm:mb-6 text-center relative z-10" 
+                                        style={{ fontFamily: "'Rye', serif" }}>
+                                        🏆 TOP 10 DÉTECTIVES 🏆
+                                    </h2>
+                                    
+                                    <div className="space-y-2 sm:space-y-3 relative z-10">
+                                        {stats.userTotalScores.slice(0, 10).map((user, index) => {
+                                            const isCurrentUser = user.pseudo === currentUser.pseudo;
+                                            const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '';
+                                            const rank = index === 0 ? '1er' : index === 1 ? '2ème' : index === 2 ? '3ème' : `${index + 1}ème`;
+                                            
+                                            return (
+                                                <div 
+                                                    key={user.pseudo}
+                                                    className={`flex items-center justify-between p-3 sm:p-4 rounded-lg transition-all ${
+                                                        isCurrentUser 
+                                                            ? 'bg-yellow-900 border-2 border-yellow-500 scale-105' 
+                                                            : 'bg-zinc-700 border-2 border-amber-800'
+                                                    }`}>
+                                                    <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
+                                                        <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-xs sm:text-sm flex-shrink-0 ${
+                                                            index < 3 ? 'bg-gradient-to-br from-yellow-400 to-amber-600 text-black' : 'bg-zinc-600 text-amber-300'
+                                                        }`} style={{ fontFamily: "'Special Elite', cursive" }}>
+                                                            {medal || `#${index + 1}`}
+                                                        </div>
+                                                        <div className="min-w-0 flex-1">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className={`text-xs font-bold px-2 py-1 rounded whitespace-nowrap ${
+                                                                    index < 3 ? 'bg-gradient-to-r from-yellow-600 to-amber-700 text-black' : 'bg-zinc-600 text-amber-400'
+                                                                }`} style={{ fontFamily: "'Special Elite', cursive" }}>
+                                                                    {rank}
+                                                                </span>
+                                                                <div className={`font-bold text-sm sm:text-base truncate ${isCurrentUser ? 'text-yellow-300' : 'text-amber-50'}`} 
+                                                                     style={{ fontFamily: "'Special Elite', cursive" }}>
+                                                                    {user.pseudo}
+                                                                    {isCurrentUser && <span className="ml-1 sm:ml-2 text-xs">(VOUS)</span>}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div className={`text-xl sm:text-2xl font-bold ml-2 flex-shrink-0 ${isCurrentUser ? 'text-yellow-300' : 'text-yellow-400'}`}>
+                                                        {user.total}
+                                                        <span className="text-xs sm:text-sm text-amber-300 ml-1">pts</span>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            return null;
+        }
+
+        // Render the app
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
