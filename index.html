@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enquêtes et Psychopathes</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Écran de connexion -->
+    <div id="loginScreen" class="screen active">
+        <div class="login-container">
+            <div class="detective-silhouette"></div>
+            <div class="case-file">
+                <div class="stamp">CONFIDENTIEL</div>
+                <h1 class="neon-title">ENQUÊTES<br>& PSYCHOPATHES</h1>
+                <p class="tagline">Jeu d'investigation criminelle</p>
+                
+                <div class="login-box">
+                    <div class="fingerprint-bg"></div>
+                    
+                    <div id="welcomeSection">
+                        <h2>🔍 IDENTIFIEZ-VOUS</h2>
+                        <p class="instruction">Entrez votre pseudo d'enquêteur</p>
+                        
+                        <div class="input-group">
+                            <label for="pseudoInput">Pseudo :</label>
+                            <input type="text" id="pseudoInput" placeholder="Ex: Sherlock42, MissMarple..." maxlength="20" autocomplete="off">
+                            <span id="pseudoStatus" class="status-indicator"></span>
+                        </div>
+                        
+                        <div class="warning-box" id="newUserWarning" style="display: none;">
+                            <div class="warning-icon">⚠️</div>
+                            <div>
+                                <strong>ATTENTION :</strong> Vous n'aurez pas de mot de passe.<br>
+                                Ce pseudo sera votre <strong>seul moyen de vous reconnecter</strong>.<br>
+                                Choisissez-le bien et mémorisez-le !
+                            </div>
+                        </div>
+                        
+                        <div class="tips-box">
+                            <strong>💡 Conseil :</strong> Personnalisez votre pseudo pour le rendre unique et mémorable<br>
+                            <small>Exemples : DetectiveDuLac, EnqueteurFou, InspecteurGadget</small>
+                        </div>
+                        
+                        <button id="loginBtn" class="btn-primary" disabled>
+                            <span class="btn-icon">🔓</span>
+                            ACCÉDER AUX ENQUÊTES
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="crime-tape crime-tape-top">⚠️ POLICE LINE - DO NOT CROSS ⚠️</div>
+            <div class="crime-tape crime-tape-bottom">⚠️ POLICE LINE - DO NOT CROSS ⚠️</div>
+        </div>
+    </div>
+
+    <!-- Écran principal du jeu -->
+    <div id="gameScreen" class="screen">
+        <header class="main-header">
+            <div class="header-content">
+                <h1 class="site-title">🔍 ENQUÊTES & PSYCHOPATHES</h1>
+                <nav class="main-nav">
+                    <button class="nav-btn active" onclick="showSection('chapitres')">
+                        📂 CHAPITRES
+                    </button>
+                    <button class="nav-btn" onclick="showSection('classement')">
+                        🏆 CLASSEMENT
+                    </button>
+                </nav>
+                <div class="user-info">
+                    <span class="badge">Enquêteur</span>
+                    <span id="currentUser" class="username"></span>
+                    <button id="logoutBtn" class="btn-logout">Se déconnecter</button>
+                </div>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <!-- Section Chapitres -->
+            <div id="sectionChapitres" class="content-section active">
+            <!-- Score Total -->
+            <section class="score-board">
+                <div class="score-card main-score">
+                    <div class="score-label">Votre Score</div>
+                    <div class="score-value">
+                        <span id="playerScore">0</span>
+                        <span class="max-score">/110</span>
+                    </div>
+                    <div class="score-detail">
+                        <small>
+                            Ch1: <span id="miniScore1">-</span> | 
+                            Ch2: <span id="miniScore2">-</span> | 
+                            Ch3: <span id="miniScore3">-</span> | 
+                            Ch4: <span id="miniScore4">-</span> | 
+                            Ch5: <span id="miniScore5">-</span> | 
+                            Ch6: <span id="miniScore6">-</span> | 
+                            Ch7: <span id="miniScore7">-</span> | 
+                            Bonus: <span id="miniScoreBonus">-</span>
+                        </small>
+                    </div>
+                </div>
+                <div class="score-card avg-score">
+                    <div class="score-label">Moyenne Globale</div>
+                    <div class="score-value">
+                        <span id="avgScore">0</span>
+                        <span class="max-score">/110</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Chapitres -->
+            <section class="chapters-grid">
+                <!-- Chapitre 1 -->
+                <div class="chapter-card" data-chapter="1">
+                    <div class="chapter-header">
+                        <h3 class="chapter-title">CHAPITRE 1</h3>
+                        <div class="difficulty">Difficulté: <span class="stars">★★☆☆☆</span> 2.1/5</div>
+                    </div>
+                    <h4 class="case-title">Madame BONPOIL encaisse bien</h4>
+                    <div class="chapter-stats">
+                        <div class="stat">
+                            <span class="stat-label">Votre score :</span>
+                            <span class="stat-value" id="score1">-</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">Moyenne :</span>
+                            <span class="stat-value avg" id="avg1">-</span>
+                        </div>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress1" style="width: 0%"></div>
+                    </div>
+                    <button class="btn-chapter" onclick="openChapter(1)">ENQUÊTER</button>
+                </div>
+
+                <!-- Chapitre 2 -->
+                <div class="chapter-card" data-chapter="2">
+                    <div class="chapter-header">
+                        <h3 class="chapter-title">CHAPITRE 2</h3>
+                        <div class="difficulty">Difficulté: <span class="stars">★★★★☆</span> 3.5/5</div>
+                    </div>
+                    <h4 class="case-title">Un fonctionnaire en moins</h4>
+                    <div class="chapter-stats">
+                        <div class="stat">
+                            <span class="stat-label">Votre score :</span>
+                            <span class="stat-value" id="score2">-</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">Moyenne :</span>
+                            <span class="stat-value avg" id="avg2">-</span>
+                        </div>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress2" style="width: 0%"></div>
+                    </div>
+                    <button class="btn-chapter" onclick="openChapter(2)">ENQUÊTER</button>
+                </div>
+
+                <!-- Chapitre 3 -->
+                <div class="chapter-card" data-chapter="3">
+                    <div class="chapter-header">
+                        <h3 class="chapter-title">CHAPITRE 3</h3>
+                        <div class="difficulty">Difficulté: <span class="stars">★★★☆☆</span> 3.1/5</div>
+                    </div>
+                    <h4 class="case-title">Une pute en moins</h4>
+                    <div class="chapter-stats">
+                        <div class="stat">
+                            <span class="stat-label">Votre score :</span>
+                            <span class="stat-value" id="score3">-</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">Moyenne :</span>
+                            <span class="stat-value avg" id="avg3">-</span>
+                        </div>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress3" style="width: 0%"></div>
+                    </div>
+                    <button class="btn-chapter" onclick="openChapter(3)">ENQUÊTER</button>
+                </div>
+
+                <!-- Chapitre 4 -->
+                <div class="chapter-card" data-chapter="4">
+                    <div class="chapter-header">
+                        <h3 class="chapter-title">CHAPITRE 4</h3>
+                        <div class="difficulty">Difficulté: <span class="stars">★★☆☆☆</span> 1.7/5</div>
+                    </div>
+                    <h4 class="case-title">L'encre de la vengeance</h4>
+                    <div class="chapter-stats">
+                        <div class="stat">
+                            <span class="stat-label">Votre score :</span>
+                            <span class="stat-value" id="score4">-</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">Moyenne :</span>
+                            <span class="stat-value avg" id="avg4">-</span>
+                        </div>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress4" style="width: 0%"></div>
+                    </div>
+                    <button class="btn-chapter" onclick="openChapter(4)">ENQUÊTER</button>
+                </div>
+
+                <!-- Chapitre 5 -->
+                <div class="chapter-card" data-chapter="5">
+                    <div class="chapter-header">
+                        <h3 class="chapter-title">CHAPITRE 5</h3>
+                        <div class="difficulty">Difficulté: <span class="stars">★★★☆☆</span> 3.2/5</div>
+                    </div>
+                    <h4 class="case-title">Potins de Stars</h4>
+                    <div class="chapter-stats">
+                        <div class="stat">
+                            <span class="stat-label">Votre score :</span>
+                            <span class="stat-value" id="score5">-</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">Moyenne :</span>
+                            <span class="stat-value avg" id="avg5">-</span>
+                        </div>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress5" style="width: 0%"></div>
+                    </div>
+                    <button class="btn-chapter" onclick="openChapter(5)">ENQUÊTER</button>
+                </div>
+
+                <!-- Chapitre 6 -->
+                <div class="chapter-card" data-chapter="6">
+                    <div class="chapter-header">
+                        <h3 class="chapter-title">CHAPITRE 6</h3>
+                        <div class="difficulty">Difficulté: <span class="stars">★★★★★</span> 4.8/5</div>
+                    </div>
+                    <h4 class="case-title">Toc toc toc</h4>
+                    <div class="chapter-stats">
+                        <div class="stat">
+                            <span class="stat-label">Votre score :</span>
+                            <span class="stat-value" id="score6">-</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">Moyenne :</span>
+                            <span class="stat-value avg" id="avg6">-</span>
+                        </div>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress6" style="width: 0%"></div>
+                    </div>
+                    <button class="btn-chapter" onclick="openChapter(6)">ENQUÊTER</button>
+                </div>
+
+                <!-- Chapitre 7 -->
+                <div class="chapter-card" data-chapter="7">
+                    <div class="chapter-header">
+                        <h3 class="chapter-title">CHAPITRE 7</h3>
+                        <div class="difficulty">Difficulté: <span class="stars">★★★★★</span> 4.5/5</div>
+                    </div>
+                    <h4 class="case-title">Choisis ta folie</h4>
+                    <div class="chapter-stats">
+                        <div class="stat">
+                            <span class="stat-label">Votre score :</span>
+                            <span class="stat-value" id="score7">-</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">Moyenne :</span>
+                            <span class="stat-value avg" id="avg7">-</span>
+                        </div>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress7" style="width: 0%"></div>
+                    </div>
+                    <button class="btn-chapter" onclick="openChapter(7)">ENQUÊTER</button>
+                </div>
+
+                <!-- Chapitre BONUS -->
+                <div class="chapter-card bonus-card locked" id="bonusCard">
+                    <div class="lock-icon">🔒</div>
+                    <div class="chapter-header">
+                        <h3 class="chapter-title">🏆 BONUS</h3>
+                    </div>
+                    <h4 class="case-title">Questionnaire - Troubles mentaux</h4>
+                    <p class="bonus-desc">Répondez à 10 questions pour gagner 10 points supplémentaires</p>
+                    <div class="chapter-stats">
+                        <div class="stat">
+                            <span class="stat-label">Votre score :</span>
+                            <span class="stat-value" id="scoreBonus">-</span>
+                        </div>
+                    </div>
+                    <div class="locked-message">Complétez les 7 chapitres pour débloquer</div>
+                    <button class="btn-chapter" onclick="openBonus()" disabled>ACCÉDER</button>
+                </div>
+            </section>
+            </div>
+            <!-- Fin Section Chapitres -->
+
+            <!-- Section Classement -->
+            <div id="sectionClassement" class="content-section">
+                <section class="stats-hero">
+                    <h2 class="stats-title">🏆 CLASSEMENT GÉNÉRAL</h2>
+                    <div class="user-rank-display">
+                        <div class="rank-badge">
+                            <div class="rank-label">Votre classement</div>
+                            <div class="rank-value" id="statsRankValue">-</div>
+                            <div class="rank-text" id="statsRankText">Vous êtes <span id="statsRank">-</span> sur <span id="statsTotalPlayers">0</span> enquêteurs</div>
+                        </div>
+                        <div class="score-comparison">
+                            <div class="comparison-item">
+                                <div class="comparison-label">Votre score</div>
+                                <div class="comparison-value player-score" id="statsPlayerScore">0</div>
+                            </div>
+                            <div class="comparison-divider">VS</div>
+                            <div class="comparison-item">
+                                <div class="comparison-label">Moyenne</div>
+                                <div class="comparison-value avg-score" id="statsAvgScore">0</div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="leaderboard-section">
+                    <h2 class="section-title">🏆 TOP 10 DES MEILLEURS ENQUÊTEURS</h2>
+                    <div class="leaderboard" id="statsLeaderboard">
+                        <!-- Rempli par JS -->
+                    </div>
+                </section>
+            </div>
+            <!-- Fin Section Statistiques -->
+
+            <!-- Classement bas de page (Section Chapitres uniquement) -->
+            <section class="leaderboard-section bottom-leaderboard" id="bottomLeaderboard">
+                <h2 class="section-title">🏆 CLASSEMENT DES ENQUÊTEURS</h2>
+                <div class="total-players">
+                    Vous êtes <span id="playerRank">-</span> parmi <span id="totalPlayers">0</span> enquêteurs
+                </div>
+                <div class="leaderboard" id="leaderboard">
+                    <!-- Rempli par JS -->
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modal Chapitre -->
+    <div id="chapterModal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+            <div class="modal-header">
+                <h2 id="modalTitle"></h2>
+                <div id="modalDifficulty" class="difficulty"></div>
+            </div>
+            <div class="modal-body">
+                <p class="modal-instruction">Sélectionnez votre score pour ce chapitre :</p>
+                <div id="scoreOptions" class="score-options">
+                    <!-- Rempli dynamiquement -->
+                </div>
+                <button id="validateBtn" class="btn-validate" disabled>
+                    <span class="stamp-icon">✓</span>
+                    VALIDER LE SCORE
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Bonus -->
+    <div id="bonusModal" class="modal">
+        <div class="modal-content modal-bonus">
+            <button class="modal-close" onclick="closeBonusModal()">&times;</button>
+            <div class="modal-header">
+                <h2>🏆 QUESTIONNAIRE BONUS</h2>
+                <h3>Connaissez-vous vraiment les troubles mentaux ?</h3>
+            </div>
+            <div class="modal-body">
+                <div class="bonus-info-box">
+                    ⚠️ <strong>Règle importante :</strong> Une fois un choix validé, vous ne pourrez plus modifier votre réponse.
+                </div>
+                <div class="bonus-score-display">
+                    Score : <span id="bonusCurrentScore">0</span>/10
+                </div>
+                <div id="questionsContainer">
+                    <!-- Rempli par JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
