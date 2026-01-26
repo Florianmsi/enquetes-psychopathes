@@ -1,0 +1,1388 @@
+/* ============================================
+   ENQUÊTES ET PSYCHOPATHES - POLAR NOIR
+   ============================================ */
+
+:root {
+    /* Palette Polar Noir */
+    --noir-profond: #0a0a0a;
+    --gris-anthracite: #1a1a1a;
+    --gris-fonce: #2a2a2a;
+    --gris-moyen: #3a3a3a;
+    --jaune-moutarde: #d4a574;
+    --jaune-vif: #f4c430;
+    --rouge-sang: #8b0000;
+    --rouge-vif: #dc143c;
+    --blanc-casse: #f5f5dc;
+    --beige-pale: #e8dcc4;
+    
+    /* Effets */
+    --shadow-hard: 0 4px 0 rgba(0,0,0,0.8);
+    --shadow-medium: 0 8px 16px rgba(0,0,0,0.6);
+    --shadow-intense: 0 12px 24px rgba(0,0,0,0.9);
+    --glow-yellow: 0 0 20px var(--jaune-vif);
+    --glow-red: 0 0 15px var(--rouge-vif);
+}
+
+/* ============================================
+   RESET & BASE
+   ============================================ */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Courier Prime', 'Courier New', monospace;
+    background-color: var(--noir-profond);
+    color: var(--blanc-casse);
+    line-height: 1.6;
+    overflow-x: hidden;
+    position: relative;
+}
+
+/* Effet de grain vintage */
+.grain-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300"><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23noise)" opacity="0.05"/></svg>');
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.4;
+}
+
+/* ============================================
+   TYPOGRAPHIE
+   ============================================ */
+
+h1, h2, h3 {
+    font-family: 'Bebas Neue', sans-serif;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+.special-font {
+    font-family: 'Special Elite', cursive;
+}
+
+/* ============================================
+   ÉCRANS & TRANSITIONS
+   ============================================ */
+
+.screen {
+    display: none;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+
+#loginScreen {
+    min-height: 100vh;
+}
+
+.screen.active {
+    display: block;
+    opacity: 1;
+    animation: fadeIn 0.8s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ============================================
+   ÉCRAN DE CONNEXION
+   ============================================ */
+
+#loginScreen {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--noir-profond) 0%, var(--gris-anthracite) 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Bandes de scène de crime */
+.crime-tape {
+    position: absolute;
+    width: 100%;
+    height: 60px;
+    background: repeating-linear-gradient(
+        45deg,
+        var(--jaune-vif),
+        var(--jaune-vif) 30px,
+        var(--noir-profond) 30px,
+        var(--noir-profond) 60px
+    );
+    z-index: 1;
+    border: 3px solid var(--noir-profond);
+    box-shadow: var(--shadow-medium);
+}
+
+.crime-tape-top {
+    top: 0;
+    transform: rotate(-2deg);
+}
+
+.crime-tape-bottom {
+    bottom: 0;
+    transform: rotate(2deg);
+}
+
+.crime-tape::after {
+    content: 'DO NOT CROSS • CRIME SCENE • DO NOT CROSS • CRIME SCENE • ';
+    position: absolute;
+    width: 200%;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    font-weight: bold;
+    color: var(--noir-profond);
+    letter-spacing: 3px;
+    line-height: 60px;
+    animation: scrollTape 20s linear infinite;
+}
+
+@keyframes scrollTape {
+    from { left: 0; }
+    to { left: -100%; }
+}
+
+/* Silhouette de détective */
+.detective-silhouette {
+    position: absolute;
+    width: 300px;
+    height: 400px;
+    background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 300"><ellipse cx="100" cy="40" rx="50" ry="20" fill="%23000"/><rect x="75" y="50" width="50" height="100" fill="%23000"/><circle cx="85" cy="60" r="3" fill="%23f4c430"/><circle cx="115" cy="60" r="3" fill="%23f4c430"/><rect x="60" y="150" width="80" height="150" fill="%23000"/></svg>') no-repeat center;
+    background-size: contain;
+    opacity: 0.1;
+    right: -50px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 0;
+}
+
+.login-container {
+    position: relative;
+    z-index: 2;
+    max-width: 600px;
+    width: 90%;
+    padding: 40px;
+}
+
+/* Titre principal */
+.main-title {
+    text-align: center;
+    font-size: 4rem;
+    color: var(--jaune-vif);
+    text-shadow: 
+        3px 3px 0 var(--rouge-sang),
+        6px 6px 20px rgba(244, 196, 48, 0.5);
+    margin-bottom: 20px;
+    animation: flicker 3s infinite alternate;
+}
+
+.title-line {
+    display: block;
+    line-height: 0.9;
+}
+
+@keyframes flicker {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.95; }
+}
+
+/* Décoration tête de mort */
+.skull-decoration {
+    text-align: center;
+    font-size: 3rem;
+    margin: 20px 0;
+    opacity: 0.3;
+}
+
+.skull-decoration::before {
+    content: '☠️';
+    display: inline-block;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+/* Boîte de connexion */
+.login-box {
+    background: var(--gris-anthracite);
+    border: 4px solid var(--jaune-moutarde);
+    border-radius: 4px;
+    padding: 40px;
+    box-shadow: 
+        var(--shadow-intense),
+        inset 0 0 40px rgba(0,0,0,0.5);
+    position: relative;
+}
+
+.login-box::before {
+    content: 'CONFIDENTIEL';
+    position: absolute;
+    top: -25px;
+    left: 50%;
+    transform: translateX(-50%) rotate(-2deg);
+    background: var(--rouge-sang);
+    color: var(--blanc-casse);
+    padding: 8px 30px;
+    font-family: 'Special Elite', cursive;
+    font-size: 0.9rem;
+    letter-spacing: 3px;
+    box-shadow: var(--shadow-medium);
+    border: 2px solid var(--noir-profond);
+}
+
+.typewriter-effect {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.intro-text {
+    font-family: 'Special Elite', cursive;
+    font-size: 1.3rem;
+    color: var(--jaune-moutarde);
+}
+
+/* Message d'avertissement */
+.warning-message {
+    background: rgba(220, 20, 60, 0.1);
+    border: 2px solid var(--rouge-vif);
+    border-radius: 4px;
+    padding: 20px;
+    margin: 25px 0;
+    position: relative;
+}
+
+.warning-icon {
+    font-size: 2rem;
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.warning-message p {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin: 10px 0;
+}
+
+.warning-message strong {
+    color: var(--rouge-vif);
+    font-weight: bold;
+}
+
+.tip {
+    color: var(--jaune-vif);
+    font-style: italic;
+    font-size: 0.9rem;
+}
+
+/* Exemples de pseudos */
+.pseudo-examples {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    margin: 20px 0;
+}
+
+.example-tag {
+    background: var(--gris-fonce);
+    color: var(--jaune-moutarde);
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    border: 1px solid var(--jaune-moutarde);
+    font-family: 'Courier Prime', monospace;
+}
+
+/* Groupe d'input */
+.input-group {
+    margin: 30px 0;
+}
+
+.input-group label {
+    display: block;
+    font-size: 1.1rem;
+    color: var(--jaune-moutarde);
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+
+.magnifying-glass {
+    font-size: 1.3rem;
+    margin-right: 8px;
+}
+
+#pseudoInput {
+    width: 100%;
+    padding: 15px;
+    font-size: 1.1rem;
+    font-family: 'Courier Prime', monospace;
+    background: var(--noir-profond);
+    color: var(--blanc-casse);
+    border: 3px solid var(--gris-moyen);
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+#pseudoInput:focus {
+    outline: none;
+    border-color: var(--jaune-vif);
+    box-shadow: var(--glow-yellow);
+}
+
+.pseudo-status {
+    margin-top: 10px;
+    font-size: 0.9rem;
+    min-height: 24px;
+    font-weight: bold;
+}
+
+.pseudo-status.available {
+    color: #00ff00;
+}
+
+.pseudo-status.taken {
+    color: var(--rouge-vif);
+}
+
+.pseudo-status.checking {
+    color: var(--jaune-moutarde);
+}
+
+/* Boutons */
+.btn-primary, .btn-secondary {
+    width: 100%;
+    padding: 18px;
+    font-size: 1.2rem;
+    font-family: 'Bebas Neue', sans-serif;
+    letter-spacing: 2px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-primary {
+    background: var(--jaune-vif);
+    color: var(--noir-profond);
+    box-shadow: var(--shadow-hard);
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: var(--jaune-moutarde);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 0 rgba(0,0,0,0.8), var(--glow-yellow);
+}
+
+.btn-primary:active:not(:disabled) {
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 rgba(0,0,0,0.8);
+}
+
+.btn-primary:disabled {
+    background: var(--gris-moyen);
+    color: var(--gris-fonce);
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.btn-secondary {
+    background: var(--gris-fonce);
+    color: var(--blanc-casse);
+    border: 2px solid var(--jaune-moutarde);
+}
+
+.btn-secondary:hover {
+    background: var(--gris-moyen);
+    border-color: var(--jaune-vif);
+    transform: translateY(-2px);
+}
+
+/* ============================================
+   ÉCRAN DE JEU
+   ============================================ */
+
+.game-header {
+    background: var(--gris-anthracite);
+    border-bottom: 4px solid var(--jaune-moutarde);
+    padding: 20px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: var(--shadow-medium);
+}
+
+.header-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.case-file-title {
+    font-size: 1.8rem;
+    color: var(--jaune-vif);
+    text-shadow: 2px 2px 0 var(--rouge-sang);
+}
+
+.file-icon {
+    font-size: 2rem;
+    margin-right: 10px;
+}
+
+.header-stats {
+    display: flex;
+    gap: 30px;
+}
+
+.stat-box {
+    background: var(--noir-profond);
+    padding: 15px 25px;
+    border: 2px solid var(--jaune-moutarde);
+    border-radius: 4px;
+    text-align: center;
+    min-width: 150px;
+    transition: all 0.3s ease;
+}
+
+.stat-box.clickable {
+    cursor: pointer;
+}
+
+.stat-box.clickable:hover {
+    background: var(--gris-fonce);
+    border-color: var(--jaune-vif);
+    transform: translateY(-2px);
+    box-shadow: var(--glow-yellow);
+}
+
+.stat-label {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--jaune-moutarde);
+    letter-spacing: 2px;
+}
+
+.stat-value {
+    display: block;
+    font-size: 2.5rem;
+    font-family: 'Bebas Neue', sans-serif;
+    color: var(--jaune-vif);
+    line-height: 1;
+    text-shadow: 2px 2px 0 var(--rouge-sang);
+}
+
+.stat-max {
+    font-size: 1rem;
+    color: var(--beige-pale);
+}
+
+/* Indicateur de scroll */
+.scroll-indicator {
+    text-align: center;
+    padding: 20px 0;
+    background: linear-gradient(180deg, var(--gris-anthracite) 0%, var(--noir-profond) 100%);
+    border-bottom: 2px solid var(--jaune-moutarde);
+    animation: fadeInDelay 0.8s ease 0.3s forwards;
+    opacity: 0;
+}
+
+.scroll-text {
+    display: block;
+    font-size: 1.2rem;
+    color: var(--jaune-vif);
+    letter-spacing: 3px;
+    margin-bottom: 10px;
+    font-family: 'Bebas Neue', sans-serif;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+.scroll-arrow {
+    display: block;
+    font-size: 3rem;
+    color: var(--jaune-vif);
+    animation: bounce 1.5s ease-in-out infinite;
+    text-shadow: 0 0 20px var(--jaune-vif);
+    filter: drop-shadow(0 0 10px var(--jaune-vif));
+}
+
+@keyframes fadeInDelay {
+    to { opacity: 1; }
+}
+
+@keyframes bounce {
+    0%, 100% { 
+        transform: translateY(0);
+        opacity: 1;
+    }
+    50% { 
+        transform: translateY(15px);
+        opacity: 0.7;
+    }
+}
+
+/* Contenu principal */
+.game-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 10px 20px;
+}
+
+/* Grille des chapitres */
+.chapters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+    margin-bottom: 40px;
+    margin-top: 0;
+}
+
+.chapter-card {
+    background: var(--gris-anthracite);
+    border: 3px solid var(--gris-moyen);
+    border-radius: 4px;
+    padding: 25px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Carte avec score 0 - Rouge */
+.chapter-card.score-zero {
+    background: rgba(139, 0, 0, 0.15);
+    border-color: var(--rouge-sang);
+}
+
+.chapter-card.score-zero::before {
+    background: var(--rouge-sang);
+}
+
+/* Carte avec score maximum - Brillant */
+.chapter-card.score-max {
+    background: linear-gradient(135deg, var(--gris-anthracite) 0%, rgba(244, 196, 48, 0.15) 100%);
+    border-color: var(--jaune-vif);
+    box-shadow: 
+        0 0 30px rgba(244, 196, 48, 0.6), 
+        0 0 60px rgba(244, 196, 48, 0.3),
+        var(--shadow-medium);
+    animation: shimmer 2s ease-in-out infinite;
+    position: relative;
+}
+
+.chapter-card.score-max::before {
+    background: linear-gradient(90deg, 
+        var(--jaune-vif) 0%, 
+        var(--jaune-moutarde) 25%, 
+        var(--jaune-vif) 50%,
+        var(--jaune-moutarde) 75%,
+        var(--jaune-vif) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmerGradient 3s linear infinite;
+}
+
+.chapter-card.score-max::after {
+    content: '✨';
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 2rem;
+    animation: sparkle 1.5s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+    0%, 100% { 
+        box-shadow: 
+            0 0 30px rgba(244, 196, 48, 0.6), 
+            0 0 60px rgba(244, 196, 48, 0.3),
+            var(--shadow-medium);
+        transform: scale(1);
+    }
+    50% { 
+        box-shadow: 
+            0 0 40px rgba(244, 196, 48, 0.8), 
+            0 0 80px rgba(244, 196, 48, 0.5),
+            var(--shadow-intense);
+        transform: scale(1.02);
+    }
+}
+
+@keyframes shimmerGradient {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 200% 50%; }
+}
+
+@keyframes sparkle {
+    0%, 100% { 
+        opacity: 0.6;
+        transform: rotate(0deg) scale(1);
+    }
+    50% { 
+        opacity: 1;
+        transform: rotate(180deg) scale(1.2);
+    }
+}
+
+.chapter-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, var(--jaune-vif), var(--rouge-sang));
+}
+
+.chapter-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--jaune-moutarde);
+    box-shadow: var(--shadow-medium), var(--glow-yellow);
+}
+
+.chapter-header {
+    margin-bottom: 20px;
+}
+
+.chapter-number {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1rem;
+    color: var(--jaune-moutarde);
+    letter-spacing: 2px;
+}
+
+.chapter-title {
+    font-size: 1.5rem;
+    color: var(--blanc-casse);
+    margin: 10px 0;
+    line-height: 1.2;
+}
+
+.chapter-difficulty {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid var(--gris-moyen);
+}
+
+.difficulty-label {
+    font-size: 0.85rem;
+    color: var(--jaune-moutarde);
+}
+
+.stars {
+    color: var(--jaune-vif);
+    font-size: 1.2rem;
+}
+
+/* Points du chapitre */
+.chapter-points {
+    margin: 20px 0;
+}
+
+.points-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.point-option {
+    flex: 1;
+    min-width: 60px;
+    padding: 12px;
+    background: var(--noir-profond);
+    border: 2px solid var(--gris-moyen);
+    color: var(--blanc-casse);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.3rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border-radius: 4px;
+}
+
+.point-option:hover:not(.locked) {
+    border-color: var(--jaune-vif);
+    background: var(--gris-fonce);
+    transform: scale(1.05);
+}
+
+.point-option.selected {
+    background: var(--jaune-vif);
+    color: var(--noir-profond);
+    border-color: var(--jaune-vif);
+    box-shadow: var(--glow-yellow);
+}
+
+.point-option.locked {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.validate-btn {
+    width: 100%;
+    margin-top: 15px;
+}
+
+.chapter-locked {
+    text-align: center;
+    padding: 20px;
+    color: var(--jaune-moutarde);
+    font-style: italic;
+}
+
+.chapter-locked .trophy {
+    font-size: 3rem;
+    display: block;
+    margin-bottom: 10px;
+    animation: shine 2s ease-in-out infinite;
+}
+
+.chapter-locked .trophy-zero {
+    animation: none;
+    filter: grayscale(100%) brightness(0.8);
+    opacity: 0.6;
+}
+
+@keyframes shine {
+    0%, 100% { 
+        transform: scale(1);
+        filter: brightness(1);
+    }
+    50% { 
+        transform: scale(1.1);
+        filter: brightness(1.5) drop-shadow(0 0 20px var(--jaune-vif));
+    }
+}
+
+/* Statistiques du chapitre */
+.chapter-stats {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--gris-moyen);
+}
+
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 10px 0;
+    font-size: 0.95rem;
+}
+
+.stat-row strong {
+    color: var(--jaune-vif);
+}
+
+.comparison-bar {
+    width: 100%;
+    height: 20px;
+    background: var(--noir-profond);
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 10px 0;
+    border: 1px solid var(--gris-moyen);
+}
+
+.comparison-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--jaune-moutarde), var(--jaune-vif));
+    transition: width 0.5s ease;
+    box-shadow: inset 0 0 10px rgba(244, 196, 48, 0.5);
+}
+
+/* Chapitre Bonus */
+.bonus-chapter {
+    margin: 40px 0;
+}
+
+.bonus-card {
+    background: linear-gradient(135deg, var(--gris-anthracite) 0%, var(--gris-fonce) 100%);
+    border: 4px solid var(--jaune-vif);
+    box-shadow: var(--glow-yellow);
+    text-align: center;
+}
+
+.bonus-header h3 {
+    font-size: 2rem;
+    color: var(--jaune-vif);
+    margin-bottom: 15px;
+}
+
+.bonus-subtitle {
+    color: var(--beige-pale);
+    font-size: 1.1rem;
+    margin-bottom: 25px;
+}
+
+.bonus-progress {
+    margin-top: 20px;
+    font-size: 1.1rem;
+    color: var(--jaune-moutarde);
+}
+
+/* Modal */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    animation: fadeIn 0.3s ease;
+}
+
+.modal.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background: var(--gris-anthracite);
+    border: 4px solid var(--jaune-moutarde);
+    border-radius: 4px;
+    padding: 40px;
+    max-width: 600px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: var(--shadow-intense), var(--glow-yellow);
+    position: relative;
+}
+
+.warning-stamp {
+    position: absolute;
+    top: -20px;
+    right: -20px;
+    background: var(--rouge-sang);
+    color: var(--blanc-casse);
+    padding: 10px 30px;
+    font-family: 'Special Elite', cursive;
+    font-size: 1.2rem;
+    transform: rotate(15deg);
+    border: 3px solid var(--noir-profond);
+    box-shadow: var(--shadow-medium);
+}
+
+.modal-content h3 {
+    font-size: 2rem;
+    color: var(--jaune-vif);
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.modal-content p {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    margin: 20px 0;
+    text-align: center;
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 20px;
+    margin-top: 30px;
+}
+
+.modal-buttons button {
+    flex: 1;
+}
+
+/* Quiz */
+.quiz-content {
+    max-width: 800px;
+}
+
+.quiz-header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid var(--jaune-moutarde);
+}
+
+.quiz-progress {
+    font-size: 1.2rem;
+    color: var(--jaune-moutarde);
+    margin-top: 15px;
+}
+
+.quiz-score {
+    color: var(--jaune-vif);
+    font-weight: bold;
+    margin-left: 20px;
+}
+
+.quiz-question {
+    margin: 30px 0;
+}
+
+.question-text {
+    font-size: 1.3rem;
+    color: var(--blanc-casse);
+    margin-bottom: 25px;
+    line-height: 1.6;
+}
+
+.quiz-options {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.quiz-option {
+    padding: 20px;
+    background: var(--noir-profond);
+    border: 2px solid var(--gris-moyen);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 1.1rem;
+    text-align: left;
+}
+
+.quiz-option:hover:not(.locked) {
+    border-color: var(--jaune-moutarde);
+    background: var(--gris-fonce);
+    transform: translateX(10px);
+}
+
+.quiz-option.selected {
+    border-color: var(--jaune-vif);
+    background: var(--gris-fonce);
+}
+
+.quiz-option.correct {
+    border-color: #00ff00;
+    background: rgba(0, 255, 0, 0.1);
+}
+
+.quiz-option.incorrect {
+    border-color: var(--rouge-vif);
+    background: rgba(220, 20, 60, 0.1);
+}
+
+.quiz-option.locked {
+    cursor: not-allowed;
+}
+
+.quiz-result {
+    margin-top: 15px;
+    padding: 15px;
+    border-radius: 4px;
+    font-weight: bold;
+    text-align: center;
+}
+
+.quiz-result.correct {
+    background: rgba(0, 255, 0, 0.1);
+    color: #00ff00;
+    border: 2px solid #00ff00;
+}
+
+.quiz-result.incorrect {
+    background: rgba(220, 20, 60, 0.1);
+    color: var(--rouge-vif);
+    border: 2px solid var(--rouge-vif);
+}
+
+.quiz-navigation {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 30px;
+}
+
+/* Score total */
+.total-score-section {
+    margin: 60px 0;
+}
+
+.score-card {
+    background: var(--gris-anthracite);
+    border: 4px solid var(--jaune-moutarde);
+    border-radius: 4px;
+    padding: 40px;
+    box-shadow: var(--shadow-intense);
+}
+
+.section-title {
+    text-align: center;
+    font-size: 2.5rem;
+    color: var(--jaune-vif);
+    margin-bottom: 30px;
+    text-shadow: 3px 3px 0 var(--rouge-sang);
+}
+
+.evidence-tag {
+    background: var(--noir-profond);
+    padding: 10px 30px;
+    border: 2px solid var(--jaune-moutarde);
+    display: inline-block;
+}
+
+.trophy-icon {
+    font-size: 3rem;
+    margin-right: 15px;
+}
+
+.score-comparison {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 50px;
+    flex-wrap: wrap;
+}
+
+.your-score, .avg-score {
+    text-align: center;
+    padding: 30px;
+    background: var(--noir-profond);
+    border-radius: 8px;
+    min-width: 200px;
+}
+
+.score-label {
+    display: block;
+    font-size: 1rem;
+    color: var(--jaune-moutarde);
+    letter-spacing: 3px;
+    margin-bottom: 10px;
+}
+
+.score-big {
+    display: block;
+    font-size: 5rem;
+    font-family: 'Bebas Neue', sans-serif;
+    color: var(--jaune-vif);
+    line-height: 1;
+    text-shadow: 4px 4px 0 var(--rouge-sang);
+}
+
+.score-max-label {
+    font-size: 1.5rem;
+    color: var(--beige-pale);
+}
+
+.versus {
+    font-size: 3rem;
+    font-family: 'Bebas Neue', sans-serif;
+    color: var(--rouge-sang);
+    text-shadow: 2px 2px 0 var(--jaune-vif);
+}
+
+/* Statistiques détaillées */
+.statistics-section {
+    margin: 60px 0;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin-top: 30px;
+}
+
+.stat-card {
+    background: var(--gris-anthracite);
+    border: 2px solid var(--gris-moyen);
+    border-radius: 4px;
+    padding: 20px;
+}
+
+.stat-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--gris-moyen);
+}
+
+.stat-card-title {
+    font-size: 1.2rem;
+    color: var(--blanc-casse);
+}
+
+.stat-card-chapter {
+    font-size: 0.9rem;
+    color: var(--jaune-moutarde);
+}
+
+/* Classement */
+.leaderboard-section {
+    margin: 60px 0;
+}
+
+.total-players {
+    text-align: center;
+    font-size: 1.3rem;
+    color: var(--beige-pale);
+    margin-bottom: 30px;
+    padding: 20px;
+    background: var(--gris-anthracite);
+    border: 2px solid var(--gris-moyen);
+    border-radius: 4px;
+}
+
+.fingerprint-icon {
+    font-size: 1.8rem;
+    margin-right: 10px;
+}
+
+.leaderboard-container {
+    background: var(--gris-anthracite);
+    border: 3px solid var(--jaune-moutarde);
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: var(--shadow-medium);
+}
+
+.leaderboard-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.leaderboard-table thead {
+    background: var(--noir-profond);
+    border-bottom: 3px solid var(--jaune-moutarde);
+}
+
+.leaderboard-table th {
+    padding: 20px;
+    text-align: left;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.3rem;
+    color: var(--jaune-vif);
+    letter-spacing: 2px;
+}
+
+.leaderboard-table td {
+    padding: 20px;
+    border-bottom: 1px solid var(--gris-moyen);
+    font-size: 1.1rem;
+}
+
+.leaderboard-table tbody tr {
+    transition: all 0.3s ease;
+}
+
+.leaderboard-table tbody tr:hover {
+    background: var(--gris-fonce);
+}
+
+.leaderboard-table tbody tr.current-player {
+    background: rgba(244, 196, 48, 0.1);
+    border: 2px solid var(--jaune-vif);
+}
+
+.rank-badge {
+    display: inline-block;
+    width: 40px;
+    height: 40px;
+    line-height: 40px;
+    text-align: center;
+    border-radius: 50%;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.3rem;
+    font-weight: bold;
+}
+
+.rank-1 {
+    background: linear-gradient(135deg, #ffd700, #ffed4e);
+    color: var(--noir-profond);
+    box-shadow: 0 0 20px #ffd700;
+}
+
+.rank-2 {
+    background: linear-gradient(135deg, #c0c0c0, #e8e8e8);
+    color: var(--noir-profond);
+}
+
+.rank-3 {
+    background: linear-gradient(135deg, #cd7f32, #e89f65);
+    color: var(--noir-profond);
+}
+
+.rank-other {
+    background: var(--gris-fonce);
+    color: var(--blanc-casse);
+    border: 2px solid var(--gris-moyen);
+}
+
+.player-name {
+    font-weight: bold;
+    color: var(--blanc-casse);
+}
+
+.player-score {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.8rem;
+    color: var(--jaune-vif);
+    text-shadow: 2px 2px 0 var(--rouge-sang);
+}
+
+/* Footer */
+.game-footer {
+    text-align: center;
+    padding: 40px 20px;
+    margin-top: 60px;
+    border-top: 2px solid var(--gris-moyen);
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 768px) {
+    .main-title {
+        font-size: 2.5rem;
+    }
+    
+    .login-box {
+        padding: 25px;
+    }
+    
+    .header-content {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .case-file-title {
+        font-size: 1.4rem;
+    }
+    
+    .header-stats {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .stat-box {
+        min-width: 120px;
+    }
+    
+    .chapters-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .score-comparison {
+        flex-direction: column;
+        gap: 30px;
+    }
+    
+    .score-big {
+        font-size: 4rem;
+    }
+    
+    .section-title {
+        font-size: 1.8rem;
+    }
+    
+    .leaderboard-table th,
+    .leaderboard-table td {
+        padding: 12px 8px;
+        font-size: 0.95rem;
+    }
+    
+    .modal-content {
+        padding: 25px;
+    }
+    
+    .quiz-content {
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .crime-tape {
+        height: 40px;
+    }
+    
+    .crime-tape::after {
+        font-size: 12px;
+        line-height: 40px;
+    }
+    
+    .main-title {
+        font-size: 2rem;
+    }
+    
+    .stat-value {
+        font-size: 2rem;
+    }
+    
+    .point-option {
+        min-width: 50px;
+        padding: 10px;
+        font-size: 1.1rem;
+    }
+}
+
+/* ============================================
+   ANIMATIONS SUPPLÉMENTAIRES
+   ============================================ */
+
+@keyframes slideInFromLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideInFromRight {
+    from {
+        opacity: 0;
+        transform: translateX(50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.chapter-card {
+    animation: slideInFromLeft 0.5s ease;
+}
+
+.chapter-card:nth-child(even) {
+    animation: slideInFromRight 0.5s ease;
+}
+
+/* Effet d'encre qui coule */
+@keyframes inkDrip {
+    0% {
+        clip-path: polygon(0 0, 100% 0, 100% 0, 0 0);
+    }
+    100% {
+        clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+    }
+}
+
+.screen.active {
+    animation: fadeIn 0.8s ease, inkDrip 1s ease;
+}
