@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enquêtes et Psychopathes</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Courier+Prime:wght@400;700&family=Special+Elite&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Effet de grain pour l'ambiance film noir -->
+    <div class="grain-overlay"></div>
+    
+    <!-- Écran de connexion -->
+    <div id="loginScreen" class="screen active">
+        <div class="crime-tape crime-tape-top"></div>
+        <div class="login-container">
+            <div class="detective-silhouette"></div>
+            <h1 class="main-title">
+                <span class="title-line">ENQUÊTES</span>
+                <span class="title-line">ET</span>
+                <span class="title-line">PSYCHOPATHES</span>
+            </h1>
+            <div class="skull-decoration"></div>
+            
+            <div class="login-box">
+                <div class="typewriter-effect">
+                    <p class="intro-text">Bienvenue détective...</p>
+                </div>
+                
+                <div class="warning-message">
+                    <div class="warning-icon">⚠️</div>
+                    <p><strong>ATTENTION :</strong> Vous n'aurez pas de mot de passe. Ce pseudo sera votre seul moyen de vous reconnecter. Choisissez-le bien et mémorisez-le !</p>
+                    <p class="tip">💡 Conseil : Personnalisez votre pseudo pour le rendre unique et mémorable</p>
+                </div>
+                
+                <div class="pseudo-examples">
+                    <span class="example-tag">Ex: DetectiveDuDimanche</span>
+                    <span class="example-tag">SherlockDuBled</span>
+                    <span class="example-tag">InspecteurGadjo</span>
+                </div>
+                
+                <div class="input-group">
+                    <label for="pseudoInput">
+                        <span class="magnifying-glass">🔍</span> Votre pseudo d'enquêteur
+                    </label>
+                    <input type="text" id="pseudoInput" placeholder="Entrez votre pseudo unique..." maxlength="20">
+                    <div id="pseudoStatus" class="pseudo-status"></div>
+                </div>
+                
+                <button id="loginBtn" class="btn-primary" disabled>
+                    <span class="btn-text">OUVRIR LE DOSSIER</span>
+                </button>
+            </div>
+        </div>
+        <div class="crime-tape crime-tape-bottom"></div>
+    </div>
+
+    <!-- Écran principal du jeu -->
+    <div id="gameScreen" class="screen">
+        <header class="game-header">
+            <div class="header-content">
+                <h2 class="case-file-title">
+                    <span class="file-icon">📁</span>
+                    DOSSIER : <span id="playerName"></span>
+                </h2>
+                <div class="header-stats">
+                    <div class="stat-box">
+                        <span class="stat-label">SCORE</span>
+                        <span id="currentScore" class="stat-value">0</span>
+                        <span class="stat-max">/ 120</span>
+                    </div>
+                    <div class="stat-box ranking">
+                        <span class="stat-label">CLASSEMENT</span>
+                        <span id="currentRank" class="stat-value">-</span>
+                    </div>
+                    <div class="stat-box clickable" id="top10Btn" onclick="scrollToLeaderboard()">
+                        <span class="stat-label">🏆 TOP 10</span>
+                        <span class="stat-value" style="font-size: 1.5rem;">VOIR</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="game-content">
+            <!-- Grille des chapitres -->
+            <div class="chapters-grid" id="chaptersGrid">
+                <!-- Les chapitres seront générés dynamiquement -->
+            </div>
+
+            <!-- Chapitre Bonus -->
+            <div class="bonus-chapter" id="bonusChapter" style="display: none;">
+                <div class="chapter-card bonus-card">
+                    <div class="chapter-header bonus-header">
+                        <h3>🏆 BONUS DE POINTS</h3>
+                        <p class="bonus-subtitle">Répondez à un questionnaire pour remporter 10 points supplémentaires</p>
+                    </div>
+                    <button class="btn-secondary" id="startBonusBtn">
+                        ACCÉDER AU QUESTIONNAIRE
+                    </button>
+                    <div class="bonus-progress" id="bonusProgress"></div>
+                </div>
+            </div>
+
+            <!-- Modal du questionnaire bonus -->
+            <div id="bonusModal" class="modal">
+                <div class="modal-content quiz-content">
+                    <div class="quiz-header">
+                        <h3>Connaissez-vous vraiment les troubles mentaux ?</h3>
+                        <div class="quiz-progress">
+                            Question <span id="currentQuestion">1</span>/10
+                            <span class="quiz-score">Score: <span id="quizScore">0</span>/10</span>
+                        </div>
+                    </div>
+                    <div id="quizContainer"></div>
+                </div>
+            </div>
+
+            <!-- Score total -->
+            <div class="total-score-section">
+                <div class="score-card">
+                    <h3 class="section-title">
+                        <span class="evidence-tag">PREUVES RÉCOLTÉES</span>
+                    </h3>
+                    <div class="score-comparison">
+                        <div class="your-score">
+                            <span class="score-label">VOUS</span>
+                            <span id="finalScore" class="score-big">0</span>
+                            <span class="score-max-label">/ 120</span>
+                        </div>
+                        <div class="versus">VS</div>
+                        <div class="avg-score">
+                            <span class="score-label">MOYENNE</span>
+                            <span id="avgScore" class="score-big">-</span>
+                            <span class="score-max-label">/ 120</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistiques détaillées -->
+            <div class="statistics-section">
+                <h3 class="section-title">
+                    <span class="evidence-tag">RAPPORT D'ENQUÊTE</span>
+                </h3>
+                <div id="detailedStats" class="stats-grid"></div>
+            </div>
+
+            <!-- Classement -->
+            <div class="leaderboard-section">
+                <div class="total-players" id="totalPlayers">
+                    <span class="fingerprint-icon">👤</span>
+                    Vous êtes parmi <strong id="playerCount">-</strong> enquêteurs
+                </div>
+                
+                <h3 class="section-title">
+                    <span class="trophy-icon">🏆</span>
+                    TOP 10 DES MEILLEURS DÉTECTIVES
+                </h3>
+                <div class="leaderboard-container">
+                    <table class="leaderboard-table">
+                        <thead>
+                            <tr>
+                                <th>RANG</th>
+                                <th>DÉTECTIVE</th>
+                                <th>SCORE</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leaderboardBody">
+                            <!-- Le classement sera généré dynamiquement -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+
+        <footer class="game-footer">
+            <button id="logoutBtn" class="btn-secondary">
+                FERMER LE DOSSIER
+            </button>
+        </footer>
+    </div>
+
+    <!-- Modal de validation -->
+    <div id="confirmModal" class="modal">
+        <div class="modal-content">
+            <div class="warning-stamp">DÉFINITIF</div>
+            <h3>⚠️ Confirmation requise</h3>
+            <p id="confirmMessage"></p>
+            <div class="modal-buttons">
+                <button id="confirmYes" class="btn-primary">VALIDER</button>
+                <button id="confirmNo" class="btn-secondary">ANNULER</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    
+    <!-- Scripts de l'application -->
+    <script src="firebase-config.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
