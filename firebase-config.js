@@ -22,3 +22,7 @@ firebase.initializeApp(firebaseConfig);
 const database = firebase.database();
 
 console.log('Firebase initialisé avec succès !');
+// Connexion anonyme
+firebase.auth().signInAnonymously().catch(function(error) {
+  console.error("Erreur auth anonyme :", error);
+});
