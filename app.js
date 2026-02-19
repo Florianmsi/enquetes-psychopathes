@@ -172,16 +172,24 @@ function initializeApp() {
         return;
     }
 
-    // Écouteurs d'événements
-    document.getElementById('pseudoInput').addEventListener('input', checkPseudoAvailability);
-    document.getElementById('loginBtn').addEventListener('click', handleLogin);
-    document.getElementById('logoutBtn').addEventListener('click', handleLogout);
-    document.getElementById('confirmYes').addEventListener('click', confirmAction);
-    document.getElementById('confirmNo').addEventListener('click', closeConfirmModal);
-    document.getElementById('startBonusBtn').addEventListener('click', startQuiz);
+    // Connexion anonyme obligatoire avant tout
+    firebase.auth().signInAnonymously()
+        .then(() => {
+            // Écouteurs d'événements
+            document.getElementById('pseudoInput').addEventListener('input', checkPseudoAvailability);
+            document.getElementById('loginBtn').addEventListener('click', handleLogin);
+            document.getElementById('logoutBtn').addEventListener('click', handleLogout);
+            document.getElementById('confirmYes').addEventListener('click', confirmAction);
+            document.getElementById('confirmNo').addEventListener('click', closeConfirmModal);
+            document.getElementById('startBonusBtn').addEventListener('click', startQuiz);
 
-    // Charger tous les scores au démarrage
-    loadAllScores();
+            // Charger tous les scores au démarrage
+            loadAllScores();
+        })
+        .catch(error => {
+            console.error('Erreur auth anonyme:', error);
+            alert('Erreur de connexion. Veuillez réessayer.');
+        });
 }
 
 // ============================================
